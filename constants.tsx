@@ -133,7 +133,7 @@ export const QUESTIONS: Question[] = [
   },
   {
     id: 18,
-    text: "จากข้อ 12 ข้อใดคือคีย์ลัดในการ Past หรือ วาง วัตถุ ?",
+    text: "จากข้อ 17 ข้อใดคือคีย์ลัดในการ Past หรือ วาง วัตถุ ?",
     options: ["Ctrl + D", "Ctrl + A", "Ctrl + G", "Ctrl + P", "Ctrl + C"],
     correctAnswerIndex: 0 // ก (Based on user confirmation 18 = Ctrl+D)
   },
