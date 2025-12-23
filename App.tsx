@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { QUESTIONS, PASS_SCORE, MAX_RAW_SCORE, EXAM_INFO, GOOGLE_SCRIPT_URL } from './constants';
+import { QUESTIONS, PASS_SCORE, EXAM_INFO, GOOGLE_SCRIPT_URL } from './constants';
 import { StudentInfo, ExamRecord, Question, ExamInfo } from './types';
 import ExamHeader from './components/ExamHeader';
 import StudentForm from './components/StudentForm';
@@ -15,7 +16,6 @@ const App: React.FC = () => {
   const [rawScore, setRawScore] = useState(0);
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>([]);
   
-  // Initialize with DEFAULT config first, then try to load from local storage
   const [examInfo, setExamInfo] = useState<ExamInfo>(() => {
     try {
       const saved = localStorage.getItem('exam_info_config');
@@ -25,60 +25,37 @@ const App: React.FC = () => {
     }
   });
 
-  // Fetch Global Configuration from Google Sheet (for students)
   useEffect(() => {
     const fetchGlobalConfig = async () => {
       try {
-        // We assume the script handles ?type=setting to return JSON
         const response = await fetch(`${GOOGLE_SCRIPT_URL}?type=setting`);
         const data = await response.json();
-        
-        // Validate if data has necessary fields
         if (data && data.school && data.title) {
-           setExamInfo(prev => ({
-             ...prev,
-             ...data
-           }));
-           // Update local cache
+           setExamInfo(prev => ({ ...prev, ...data }));
            localStorage.setItem('exam_info_config', JSON.stringify(data));
         }
       } catch (error) {
         console.log("Could not fetch global config, using defaults/local.");
       }
     };
-
     fetchGlobalConfig();
   }, []);
 
   const handleUpdateExamInfo = (newInfo: ExamInfo) => {
     setExamInfo(newInfo);
-    // Also save to localStorage immediately for the admin
     localStorage.setItem('exam_info_config', JSON.stringify(newInfo));
   };
 
   const handleStartExam = (info: StudentInfo) => {
-    // Shuffle options for each question
     const shuffledQuestions = QUESTIONS.map(q => {
-      // Create pairs of (option, originalIndex)
       const optionsWithIndex = q.options.map((opt, i) => ({ opt, originalIndex: i }));
-      
-      // Shuffle the options array using Fisher-Yates
       for (let i = optionsWithIndex.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
       }
-      
-      // Extract shuffled options
       const newOptions = optionsWithIndex.map(o => o.opt);
-      
-      // Find the new index of the correct answer
       const newCorrectIndex = optionsWithIndex.findIndex(o => o.originalIndex === q.correctAnswerIndex);
-      
-      return {
-        ...q,
-        options: newOptions,
-        correctAnswerIndex: newCorrectIndex
-      };
+      return { ...q, options: newOptions, correctAnswerIndex: newCorrectIndex };
     });
 
     setCurrentQuestions(shuffledQuestions);
@@ -94,7 +71,6 @@ const App: React.FC = () => {
 
   const calculateScore = () => {
     let score = 0;
-    // Use currentQuestions which contains the shuffled state and corrected indices
     currentQuestions.forEach(q => {
       if (answers[q.id] === q.correctAnswerIndex) {
         score++;
@@ -113,44 +89,30 @@ const App: React.FC = () => {
 
   const saveResult = (currentScore: number) => {
     if (!studentInfo) return;
-
     const dbKey = 'exam_results';
     const existingDataStr = localStorage.getItem(dbKey);
     let db: ExamRecord[] = existingDataStr ? JSON.parse(existingDataStr) : [];
-
     const recordId = `${studentInfo.room}-${studentInfo.number}`;
     const existingRecordIndex = db.findIndex(r => r.id === recordId);
-    
     const passed = currentScore >= PASS_SCORE;
     const weighted = currentScore / 2;
-    
     const roomSafeValue = `'${studentInfo.room}`;
-
     let recordToSave: ExamRecord;
 
     if (existingRecordIndex > -1) {
       const prev = db[existingRecordIndex];
-      let bestRaw = prev.rawScore;
-      let bestWeighted = prev.weightedScore;
-      let isPassed = prev.passed;
-
-      if (currentScore > prev.rawScore) {
-          bestRaw = currentScore;
-          bestWeighted = weighted;
-      }
-      if (passed) isPassed = true;
-      
+      let bestRaw = Math.max(prev.rawScore, currentScore);
+      let isPassed = prev.passed || passed;
       recordToSave = {
         ...prev,
         studentName: studentInfo.name,
         room: roomSafeValue,
         rawScore: bestRaw,
-        weightedScore: bestWeighted,
+        weightedScore: bestRaw / 2,
         passed: isPassed,
         attempts: prev.attempts + 1,
         timestamp: Date.now()
       };
-
       db[existingRecordIndex] = recordToSave;
     } else {
       recordToSave = {
@@ -164,12 +126,9 @@ const App: React.FC = () => {
         attempts: 1,
         timestamp: Date.now()
       };
-      
       db.push(recordToSave);
     }
-
     localStorage.setItem(dbKey, JSON.stringify(db));
-
     fetch(GOOGLE_SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify(recordToSave),
@@ -197,8 +156,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {view !== 'admin' && <ExamHeader info={examInfo} />}
 
-      <main className="container mx-auto px-4 flex-grow pb-10">
-        
+      <main className={`container mx-auto px-4 flex-grow pb-10 ${view === 'exam' ? 'pt-4' : 'pt-8'}`}>
         {view === 'info' && (
           <div className="animate-fade-in">
              <StudentForm onStart={handleStartExam} />
@@ -215,38 +173,48 @@ const App: React.FC = () => {
 
         {view === 'exam' && studentInfo && (
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white p-4 rounded-lg shadow mb-6 flex justify-between items-center sticky top-2 z-10 border border-blue-200">
+            <div className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center sticky top-[130px] md:top-[100px] z-40 border-l-4 border-l-blue-500 transition-all">
                <div>
-                 <span className="font-bold text-gray-700 block">{studentInfo.name}</span>
-                 <span className="text-sm text-gray-500">ห้อง {studentInfo.room} เลขที่ {studentInfo.number}</span>
+                 <span className="font-bold text-gray-800 block">{studentInfo.name}</span>
+                 <span className="text-xs text-gray-500">ห้อง {studentInfo.room} เลขที่ {studentInfo.number}</span>
                </div>
                <div className="text-right">
-                 <span className="text-sm text-gray-500 mr-2">ทำไปแล้ว</span>
-                 <span className="font-bold text-blue-600 text-xl">{Object.keys(answers).length}</span>
-                 <span className="text-gray-400">/{currentQuestions.length}</span>
+                 <div className="text-xs text-gray-400 mb-1">ความคืบหน้า</div>
+                 <div className="flex items-center gap-2">
+                    <span className="font-bold text-blue-600 text-xl">{Object.keys(answers).length}</span>
+                    <span className="text-gray-300">/</span>
+                    <span className="text-gray-500 font-medium">{currentQuestions.length}</span>
+                 </div>
                </div>
             </div>
 
-            {currentQuestions.map((q) => (
-              <QuestionCard
-                key={q.id}
-                question={q}
-                selectedOption={answers[q.id] ?? null}
-                onSelect={handleSelectAnswer}
-              />
-            ))}
+            <div className="space-y-4">
+              {currentQuestions.map((q) => (
+                <QuestionCard
+                  key={q.id}
+                  question={q}
+                  selectedOption={answers[q.id] ?? null}
+                  onSelect={handleSelectAnswer}
+                />
+              ))}
+            </div>
 
-            <div className="mt-8 flex justify-center">
+            <div className="mt-10 flex flex-col items-center">
+              {!allAnswered && (
+                <p className="text-red-500 text-sm mb-4 animate-bounce">
+                  * ยังทำไม่ครบทุกข้อ (ขาดอีก {currentQuestions.length - Object.keys(answers).length} ข้อ)
+                </p>
+              )}
               <button
                 onClick={handleFinishExam}
                 disabled={!allAnswered}
-                className={`py-4 px-12 rounded-full font-bold text-lg shadow-lg transition-transform transform ${
+                className={`py-4 px-16 rounded-full font-bold text-xl shadow-xl transition-all transform active:scale-95 ${
                   allAnswered
-                    ? 'bg-green-600 hover:bg-green-700 text-white hover:scale-105'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white hover:shadow-2xl'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed grayscale'
                 }`}
               >
-                {allAnswered ? 'ส่งคำตอบ' : 'กรุณาทำข้อสอบให้ครบทุกข้อ'}
+                {allAnswered ? 'ส่งคำตอบและดูผลสอบ' : 'กรุณาทำข้อสอบให้ครบ'}
               </button>
             </div>
           </div>
@@ -261,17 +229,20 @@ const App: React.FC = () => {
         )}
 
         {view === 'admin' && (
-          <AdminPanel 
-            currentExamInfo={examInfo}
-            onUpdateExamInfo={handleUpdateExamInfo}
-            onLogout={() => setView('info')} 
-          />
+          <div className="mt-4">
+            <AdminPanel 
+              currentExamInfo={examInfo}
+              onUpdateExamInfo={handleUpdateExamInfo}
+              onLogout={() => setView('info')} 
+            />
+          </div>
         )}
       </main>
 
       <footer className="bg-white py-6 border-t border-gray-200 text-center">
-        <p className="text-gray-700 font-medium text-sm">นายวัชรินทร์ ไมตรีแพน ครู ผู้ออกข้อสอบ</p>
-        <p className="text-gray-400 text-xs mt-1">copy right @2025</p>
+        <p className="text-gray-700 font-bold text-sm">นายวัชรินทร์ ไมตรีแพน</p>
+        <p className="text-gray-500 text-xs">ครูผู้สอน/ผู้ออกข้อสอบ</p>
+        <p className="text-gray-400 text-[10px] mt-2 tracking-widest uppercase">© 2025 Nong Bua Daeng Witthaya School</p>
       </footer>
     </div>
   );
