@@ -1,3 +1,4 @@
+
 export interface StudentInfo {
   name: string;
   room: string;
@@ -22,6 +23,7 @@ export interface ExamRecord {
   attempts: number;
   passed: boolean;
   timestamp: number;
+  switchCount: number; // จำนวนครั้งที่สลับหน้าจอ
 }
 
 export interface ExamInfo {
