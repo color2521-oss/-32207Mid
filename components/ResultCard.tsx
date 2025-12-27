@@ -1,17 +1,18 @@
 
 import React from 'react';
-import { CheckCircle, XCircle, RefreshCw, Home, User } from 'lucide-react';
+import { CheckCircle, XCircle, RefreshCw, Home, User, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { PASS_SCORE, MAX_RAW_SCORE, MAX_WEIGHTED_SCORE } from '../constants';
 import { StudentInfo } from '../types';
 
 interface Props {
   student: StudentInfo;
   rawScore: number;
+  switchCount: number;
   onRetry: () => void;
   onHome: () => void;
 }
 
-const ResultCard: React.FC<Props> = ({ student, rawScore, onRetry, onHome }) => {
+const ResultCard: React.FC<Props> = ({ student, rawScore, switchCount, onRetry, onHome }) => {
   const passed = rawScore >= PASS_SCORE;
   const weightedScore = rawScore / 2;
 
@@ -27,6 +28,7 @@ const ResultCard: React.FC<Props> = ({ student, rawScore, onRetry, onHome }) => 
         <p className="text-gray-500 font-medium">ห้อง {student.room} เลขที่ {student.number}</p>
       </div>
 
+      {/* Score and Status */}
       <div className="mb-4 flex justify-center">
         {passed ? (
           <CheckCircle className="w-16 h-16 text-green-500" />
@@ -51,6 +53,25 @@ const ResultCard: React.FC<Props> = ({ student, rawScore, onRetry, onHome }) => 
         <p className="text-4xl font-bold text-pink-600">
           {weightedScore} <span className="text-lg text-pink-300 font-normal">/ {MAX_WEIGHTED_SCORE}</span>
         </p>
+      </div>
+
+      {/* Exam Behavior Detection */}
+      <div className={`mb-6 p-3 rounded-lg border flex items-center justify-between ${switchCount === 0 ? 'bg-green-50 border-green-100' : 'bg-yellow-50 border-yellow-200'}`}>
+        <div className="flex items-center gap-2">
+          {switchCount === 0 ? (
+            <ShieldCheck size={18} className="text-green-600" />
+          ) : (
+            <AlertTriangle size={18} className="text-yellow-600" />
+          )}
+          <span className={`text-sm font-bold ${switchCount === 0 ? 'text-green-700' : 'text-yellow-700'}`}>
+            พฤติกรรมการสอบ
+          </span>
+        </div>
+        <div className="text-right">
+          <span className={`text-xs font-bold block ${switchCount === 0 ? 'text-green-600' : 'text-yellow-600'}`}>
+            {switchCount === 0 ? 'ไม่พบการสลับหน้าจอ' : `ตรวจพบการสลับหน้าจอ ${switchCount} ครั้ง`}
+          </span>
+        </div>
       </div>
 
       <div className="space-y-3">
