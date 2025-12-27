@@ -14,6 +14,7 @@ const App: React.FC = () => {
   const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [rawScore, setRawScore] = useState(0);
+  const [switchCount, setSwitchCount] = useState(0);
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>([]);
   
   const [examInfo, setExamInfo] = useState<ExamInfo>(() => {
@@ -24,6 +25,19 @@ const App: React.FC = () => {
       return EXAM_INFO;
     }
   });
+
+  // Detection logic for tab switching
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && view === 'exam') {
+        setSwitchCount(prev => prev + 1);
+        console.warn("Tab switch detected!");
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [view]);
 
   useEffect(() => {
     const fetchGlobalConfig = async () => {
@@ -61,6 +75,7 @@ const App: React.FC = () => {
     setCurrentQuestions(shuffledQuestions);
     setStudentInfo(info);
     setAnswers({});
+    setSwitchCount(0); // Reset for new attempt
     setView('exam');
     window.scrollTo(0, 0);
   };
@@ -111,7 +126,8 @@ const App: React.FC = () => {
         weightedScore: bestRaw / 2,
         passed: isPassed,
         attempts: prev.attempts + 1,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        switchCount: switchCount // Update the switch count
       };
       db[existingRecordIndex] = recordToSave;
     } else {
@@ -124,7 +140,8 @@ const App: React.FC = () => {
         weightedScore: weighted,
         passed: passed,
         attempts: 1,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        switchCount: switchCount
       };
       db.push(recordToSave);
     }
@@ -139,6 +156,7 @@ const App: React.FC = () => {
 
   const handleRetry = () => {
     setAnswers({});
+    setSwitchCount(0); // Reset for retry
     setView('exam');
     window.scrollTo(0, 0);
   };
@@ -147,6 +165,7 @@ const App: React.FC = () => {
     setStudentInfo(null);
     setAnswers({});
     setRawScore(0);
+    setSwitchCount(0);
     setView('info');
   };
 
@@ -224,6 +243,7 @@ const App: React.FC = () => {
           <ResultCard 
             student={studentInfo}
             rawScore={rawScore} 
+            switchCount={switchCount}
             onRetry={handleRetry} 
             onHome={handleBackToHome}
           />
