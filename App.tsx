@@ -220,8 +220,9 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {view === 'result' && (
+        {view === 'result' && studentInfo && (
           <ResultCard 
+            student={studentInfo}
             rawScore={rawScore} 
             onRetry={handleRetry} 
             onHome={handleBackToHome}
