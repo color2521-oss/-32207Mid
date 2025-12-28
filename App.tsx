@@ -75,7 +75,7 @@ const App: React.FC = () => {
     setCurrentQuestions(shuffledQuestions);
     setStudentInfo(info);
     setAnswers({});
-    setSwitchCount(0); // Reset for new attempt
+    setSwitchCount(0);
     setView('exam');
     window.scrollTo(0, 0);
   };
@@ -127,7 +127,7 @@ const App: React.FC = () => {
         passed: isPassed,
         attempts: prev.attempts + 1,
         timestamp: Date.now(),
-        switchCount: switchCount // Update the switch count
+        switchCount: switchCount
       };
       db[existingRecordIndex] = recordToSave;
     } else {
@@ -156,7 +156,7 @@ const App: React.FC = () => {
 
   const handleRetry = () => {
     setAnswers({});
-    setSwitchCount(0); // Reset for retry
+    setSwitchCount(0);
     setView('exam');
     window.scrollTo(0, 0);
   };
