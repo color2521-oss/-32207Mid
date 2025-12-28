@@ -15,16 +15,13 @@ const AdminPanel: React.FC<Props> = ({ currentExamInfo, onUpdateExamInfo, onLogo
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<'report' | 'settings'>('report');
   
-  // Report State
   const [data, setData] = useState<ExamRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterRoom, setFilterRoom] = useState<string>('all');
 
-  // Settings State
   const [editInfo, setEditInfo] = useState<ExamInfo>(currentExamInfo);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
-  // Sync editInfo when prop changes
   useEffect(() => {
     setEditInfo(currentExamInfo);
   }, [currentExamInfo]);
