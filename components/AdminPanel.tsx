@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ExamRecord, ExamInfo } from '../types';
 import { ADMIN_PASSWORD, EXAM_INFO, GOOGLE_SCRIPT_URL } from '../constants';
-import { Lock, LogOut, FileSpreadsheet, Settings, Save, RotateCcw, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Lock, LogOut, FileSpreadsheet, Settings, Save, RotateCcw, Loader2, RefreshCw, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
 
 interface Props {
   currentExamInfo: ExamInfo;
@@ -231,8 +231,8 @@ const AdminPanel: React.FC<Props> = ({ currentExamInfo, onUpdateExamInfo, onLogo
                   <th className="p-3 border-b font-semibold text-center">คะแนนดิบ</th>
                   <th className="p-3 border-b font-semibold text-center">คะแนนสุทธิ</th>
                   <th className="p-3 border-b font-semibold text-center">จำนวนครั้ง</th>
-                  <th className="p-3 border-b font-semibold text-center">สลับหน้าจอ</th>
-                  <th className="p-3 border-b font-semibold text-center">สถานะ</th>
+                  <th className="p-3 border-b font-semibold text-center">สลับหน้าจอ (J)</th>
+                  <th className="p-3 border-b font-semibold text-center">ผลการสอบ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-sm">
@@ -260,26 +260,28 @@ const AdminPanel: React.FC<Props> = ({ currentExamInfo, onUpdateExamInfo, onLogo
                       <td className="p-3 text-center">{record.attempts}</td>
                       <td className="p-3 text-center">
                         <div className="flex flex-col items-center justify-center">
-                          <span className={`font-bold ${record.switchCount > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                          <span className={`font-bold px-2 py-0.5 rounded ${record.switchCount > 0 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}`}>
                             {record.switchCount || 0} ครั้ง
                           </span>
                           {record.switchCount > 0 && (
-                            <div className="flex items-center gap-1 text-[10px] text-red-400 mt-0.5">
-                              <AlertTriangle size={10} /> ส่อทุจริต
+                            <div className="flex items-center gap-1 text-[10px] text-red-400 mt-1">
+                              <AlertTriangle size={10} /> พบการสลับหน้า
                             </div>
                           )}
                         </div>
                       </td>
                       <td className="p-3 text-center">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            record.passed
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {record.passed ? 'ผ่าน' : 'ไม่ผ่าน'}
-                        </span>
+                        <div className="flex items-center justify-center gap-1">
+                          {record.passed ? (
+                            <span className="flex items-center gap-1 text-green-600 font-bold">
+                              <CheckCircle2 size={16} /> ผ่าน
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-red-500 font-bold">
+                              <XCircle size={16} /> ไม่ผ่าน
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
