@@ -24,7 +24,7 @@ const ExamHeader: React.FC<Props> = ({ info }) => {
             >
               <div className="absolute -inset-1 bg-pink-100 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <img 
-                src="https://img5.pic.in.th/file/secure-sv1/nw_logo-removebg.png" 
+                src="https://s.imgz.io/2026/03/23/logo_school-removebg692d30e639191ff8.png" 
                 alt="School Logo" 
                 className="w-16 h-16 md:w-20 md:h-20 object-contain relative transform group-hover:scale-110 transition-transform duration-300"
               />
